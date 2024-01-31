@@ -4,29 +4,24 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
+import { AddNoteDialog } from "@/components/add-note-dialog";
 
 const defaultNotes = [
   {
     id: 1,
-    title: "Note 1",
+    title: "Demo Note",
     note: `Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.`,
     user: "Gurveer Singh",
   },
   {
     id: 2,
     title: "Week2 Delivery",
-    note: `
-    Your tasks this week include:
-    
+    note: `Your tasks this week include:
     • Develop a pseudocode algorithm for a collaborative note-taking application.
-    
     • The application will need to support CRUD operations for creating, reading, updating,
     and deleting notes.
-    
     • Create a video where you detail the process of exactly how to develop the above task.
-    
     • The video is used for instructional purposes by employees of Pinnacle Data Tech, so it needs to be comprehensive, engaging, and informative!
-    
     • Be prepared to screen your creation at the end of the week.`,
     user: "Rohit Sai",
   },
@@ -41,6 +36,8 @@ interface Note {
 
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const storedNotes = localStorage.getItem("notes");
@@ -51,15 +48,36 @@ export default function Home() {
     }
   }, []);
 
-  const handleAddNote = () => {
+  const handleAddNote = (data: any) => {
     const newNote = {
       id: +new Date(),
-      title: "",
-      note: "",
-      user: "",
+      title: data.title,
+      note: data.note,
+      user: "Ashish Baravaliya",
     };
     setNotes([...notes, newNote]);
     localStorage.setItem("notes", JSON.stringify([...notes, newNote]));
+  };
+
+  const handleRemoveNote = (id: number) => {
+    const newNotes = notes.filter((note) => note.id !== +id);
+    setNotes(newNotes);
+    localStorage.setItem("notes", JSON.stringify(newNotes));
+  };
+
+  const handleUpdateNote = (data: any, id: number) => {
+    const newNotes = notes.map((note) => {
+      if (note.id === +id) {
+        return {
+          ...note,
+          title: data.title,
+          note: data.note,
+        };
+      }
+      return note;
+    });
+    setNotes(newNotes);
+    localStorage.setItem("notes", JSON.stringify(newNotes));
   };
 
   return (
@@ -109,8 +127,10 @@ export default function Home() {
                       <div className="flex items-center">
                         <Avatar className="h-6 w-6 shadow-sm">
                           <AvatarFallback className="bg-primary text-xs">
-                            {note.user.split(" ")[0][0] +
-                              note.user.split(" ")[1][0]}
+                            {note.user
+                              ? note.user.split(" ")[0][0] +
+                                note.user.split(" ")[1][0]
+                              : "?"}
                           </AvatarFallback>
                         </Avatar>
                         <p className="ml-1.5 text-sm">{note.user}</p>
@@ -118,6 +138,10 @@ export default function Home() {
                       <Button
                         className="p-0 w-10 h-6 text-xs "
                         variant="secondary"
+                        onClick={() => {
+                          setSelectedNote(note);
+                          setOpen(true);
+                        }}
                       >
                         View
                       </Button>
@@ -127,13 +151,27 @@ export default function Home() {
               </div>
             </div>
             <div className="flex justify-end">
-              <Button variant="secondary" onClick={handleAddNote}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSelectedNote(null);
+                  setOpen(true);
+                }}
+              >
                 <Plus className="mr-2 h-4 w-4" /> Add Note
               </Button>
             </div>
           </div>
         </div>
       </div>
+      <AddNoteDialog
+        open={open}
+        setOpen={setOpen}
+        selectedNote={selectedNote}
+        handleSave={handleAddNote}
+        handleRemove={handleRemoveNote}
+        handleUpdate={handleUpdateNote}
+      />
     </div>
   );
 }
